@@ -1,0 +1,1065 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="validation-interface">
+    <div class="container-validation">
+        <h1>Validação de Cadastros</h1>
+        <p class="subtitle">Verifique os cadastros extraídos do PDF e crie os que não existem no banco de dados</p>
+        
+        <!-- Seção de Progresso -->
+        <div id="progress-section" class="progress-section">
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            <p id="progress-text">Preparando validação...</p>
+        </div>
+
+        <!-- Dados do PDF -->
+        <div class="pdf-data-section">
+            <h2>Dados Extraídos do PDF</h2>
+            <div class="data-cards">
+                <div class="data-card">
+                    <h3>Fornecedor</h3>
+                    <div class="data-item">
+                        <span class="label">Razão Social:</span>
+                        <span id="fornecedor-razao" class="value">{{ dados_pdf.fornecedor.razao_social|default:"N/A" }}</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="label">CNPJ:</span>
+                        <span id="fornecedor-cnpj" class="value">{{ dados_pdf.fornecedor.cnpj|default:"N/A" }}</span>
+                    </div>
+                    <div id="fornecedor-status" class="status pending">
+                        <span class="status-icon">⏳</span>
+                        <span class="status-text">Aguardando validação</span>
+                    </div>
+                </div>
+
+                <div class="data-card">
+                    <h3>Faturado</h3>
+                    <div class="data-item">
+                        <span class="label">Nome:</span>
+                        <span id="faturado-nome" class="value">{{ dados_pdf.faturado.nome|default:"N/A" }}</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="label">CPF:</span>
+                        <span id="faturado-cpf" class="value">{{ dados_pdf.faturado.cpf|default:"N/A" }}</span>
+                    </div>
+                    <div id="faturado-status" class="status pending">
+                        <span class="status-icon">⏳</span>
+                        <span class="status-text">Aguardando validação</span>
+                    </div>
+                </div>
+
+                <div class="data-card">
+                    <h3>Classificações</h3>
+                    <div id="classificacoes-list">
+                        {% if dados_pdf.classificacoes %}
+                            {% for classificacao in dados_pdf.classificacoes %}
+                            <div class="classificacao-item" data-descricao="{{ classificacao }}">
+                                <span class="classificacao-text">{{ classificacao }}</span>
+                                <div class="status pending">
+                                    <span class="status-icon">⏳</span>
+                                    <span class="status-text">Aguardando</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="no-data">Nenhuma classificação encontrada</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Ações -->
+        <div class="actions-section">
+            <button id="btn-iniciar-validacao" class="btn-primary" onclick="iniciarValidacao()">
+                <span class="btn-icon">🔍</span>
+                Iniciar Validação
+            </button>
+            
+            <div id="botoes-criacao" class="creation-buttons" style="display: none;">
+                <h3>Criar Cadastros Necessários</h3>
+                <div id="lista-botoes-criacao" class="buttons-grid">
+                    <!-- Botões de criação serão adicionados aqui dinamicamente -->
+                </div>
+            </div>
+
+            <div id="finalizar-section" class="finalizar-section" style="display: none;">
+                <button id="btn-finalizar" class="btn-success" onclick="finalizarProcesso()">
+                    <span class="btn-icon">✓</span>
+                    Todos os Cadastros Validados - Criar Lançamento
+                </button>
+            </div>
+        </div>
+
+        <!-- Mensagens de Log -->
+        <div id="log-mensagens" class="log-section">
+            <h3>Log de Validações</h3>
+            <div id="log-conteudo" class="log-content">
+                <!-- Mensagens serão adicionadas aqui -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dados em JSON para uso JavaScript -->
+{{ dados_pdf|json_script:"dados-json" }}
+
+<style>
+/* Estilos da Interface de Validação */
+.validation-interface {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container-validation {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    padding: 40px;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.validation-interface h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+/* Progress Bar */
+.progress-section {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.progress-bar {
+    background: #e0e0e0;
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 10px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.progress-fill {
+    background: linear-gradient(90deg, #4CAF50, #45a049);
+    height: 100%;
+    width: 0%;
+    transition: width 0.5s ease;
+    border-radius: 10px;
+}
+
+#progress-text {
+    text-align: center;
+    color: #666;
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+/* Data Cards */
+.pdf-data-section {
+    margin-bottom: 40px;
+}
+
+.pdf-data-section h2 {
+    color: #333;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.data-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.data-card {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 15px;
+    padding: 25px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.data-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.data-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+}
+
+.data-card:hover::before {
+    opacity: 1;
+}
+
+.data-card h3 {
+    color: #495057;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.data-card h3::before {
+    content: '📋';
+    font-size: 1.2rem;
+}
+
+.data-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.data-item:hover {
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 8px;
+    padding: 12px 10px;
+    transform: translateX(5px);
+}
+
+.data-item:last-child {
+    border-bottom: none;
+}
+
+.data-item .label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.data-item .value {
+    color: #212529;
+    font-weight: 500;
+    font-size: 1rem;
+    word-break: break-word;
+    text-align: right;
+    max-width: 60%;
+}
+
+/* Status Indicators */
+.status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.status::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.status:hover::before {
+    left: 100%;
+}
+
+.status.pending {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    color: #856404;
+    border: 2px solid #ffeaa7;
+    box-shadow: 0 4px 8px rgba(255, 193, 7, 0.2);
+}
+
+.status.success {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: #155724;
+    border: 2px solid #c3e6cb;
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2);
+}
+
+.status.error {
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    color: #721c24;
+    border: 2px solid #f5c6cb;
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
+}
+
+.status-icon {
+    font-size: 1.3em;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Classificações */
+.classificacao-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border: 2px solid #dee2e6;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.classificacao-item:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+}
+
+.classificacao-text {
+    font-weight: 500;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.no-data {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 20px;
+    font-size: 0.9rem;
+}
+
+/* Actions Section */
+.actions-section {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 30px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 15px;
+    border: 2px dashed #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.actions-section:hover {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #f8f9fa, #e3f2fd);
+}
+
+.actions-section h3 {
+    color: #495057;
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-primary:hover::before {
+    left: 100%;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-primary:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-icon {
+    font-size: 1.1em;
+}
+
+/* Creation Buttons */
+.creation-buttons {
+    margin-top: 30px;
+    padding: 25px;
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    border-radius: 15px;
+    border: 2px solid #ffeaa7;
+    animation: slideInUp 0.5s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.btn-create-item {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.btn-create-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+
+.btn-create-item:active {
+    transform: translateY(0);
+}
+
+.btn-create-item:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Finalizar Section */
+.finalizar-section {
+    margin-top: 30px;
+    animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    padding: 18px 40px;
+    border-radius: 30px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-success::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-success:hover::before {
+    left: 100%;
+}
+
+.btn-success:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(40, 167, 69, 0.5);
+}
+
+.btn-success:active {
+    transform: translateY(0);
+}
+
+.btn-success:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Log Section */
+.log-section {
+    margin-top: 40px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 15px;
+    border: 1px solid #dee2e6;
+}
+
+.log-section h3 {
+    color: #495057;
+    margin-bottom: 15px;
+}
+
+.log-content {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.log-entry {
+    padding: 8px 12px;
+    margin: 5px 0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    border-left: 4px solid;
+}
+
+.log-entry.success {
+    background: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.log-entry.warning {
+    background: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.log-entry.error {
+    background: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.log-entry.info {
+    background: #d1ecf1;
+    border-color: #17a2b8;
+    color: #0c5460;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container-validation {
+        padding: 20px;
+    }
+    
+    .validation-interface h1 {
+        font-size: 2rem;
+    }
+    
+    .data-cards {
+        grid-template-columns: 1fr;
+    }
+    
+    .buttons-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+// Variáveis globais
+let dadosValidacao = null;
+let cadastrosPendentes = {
+    fornecedor: false,
+    faturado: false,
+    classificacoes: []
+};
+
+// Inicialização ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    // Obter dados do script JSON
+    const dadosJsonElement = document.getElementById('dados-json');
+    if (dadosJsonElement) {
+        dadosValidacao = JSON.parse(dadosJsonElement.textContent);
+        console.log('Dados carregados:', dadosValidacao);
+        
+        // Adaptar estrutura para o formato esperado
+        if (dadosValidacao.fornecedor && !dadosValidacao.fornecedor.razao_social) {
+            dadosValidacao.fornecedor.razao_social = dadosValidacao.fornecedor.razao_social || '';
+        }
+        if (dadosValidacao.faturado && !dadosValidacao.faturado.nome_completo) {
+            dadosValidacao.faturado.nome_completo = dadosValidacao.faturado.nome || '';
+        }
+        if (dadosValidacao.classificacoes && !dadosValidacao.classificacao_despesa) {
+            dadosValidacao.classificacao_despesa = dadosValidacao.classificacoes;
+        }
+        
+        adicionarLog('Interface de validação carregada com dados do PDF', 'info');
+    }
+});
+
+// Função para iniciar validação
+function iniciarValidacao() {
+    if (!dadosValidacao) {
+        alert('Erro: Dados não carregados corretamente');
+        return;
+    }
+    
+    // Resetar cadastros pendentes
+    cadastrosPendentes = {
+        fornecedor: false,
+        faturado: false,
+        classificacoes: []
+    };
+    
+    // Limpar botões anteriores
+    document.getElementById('lista-botoes-criacao').innerHTML = '';
+    document.getElementById('botoes-criacao').style.display = 'none';
+    document.getElementById('finalizar-section').style.display = 'none';
+    
+    // Atualizar progresso
+    atualizarProgresso(0, 'Iniciando validação dos cadastros...');
+    adicionarLog('Iniciando validação dos cadastros...', 'info');
+    
+    // Desabilitar botão de iniciar
+    document.getElementById('btn-iniciar-validacao').disabled = true;
+    
+    // Iniciar validações sequenciais
+    setTimeout(() => validarFornecedor(), 500);
+}
+
+async function validarFornecedor() {
+    atualizarProgresso(25, 'Validando fornecedor...');
+    adicionarLog('Validando fornecedor...', 'info');
+    
+    try {
+        const cnpj = dadosValidacao.fornecedor.cnpj.replace(/[^\d]/g, '');
+        const response = await fetch('/api/validar-fornecedor/?cnpj=' + encodeURIComponent(cnpj), {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        const resultado = await response.json();
+        
+        atualizarStatusFornecedor(resultado);
+        
+        // Continuar para próxima validação
+        setTimeout(() => validarFaturado(), 1000);
+        
+    } catch (error) {
+        adicionarLog(`Erro ao validar fornecedor: ${error.message}`, 'error');
+        atualizarProgresso(25, 'Erro na validação do fornecedor');
+    }
+}
+
+async function validarFaturado() {
+    atualizarProgresso(50, 'Validando faturado...');
+    adicionarLog('Validando faturado...', 'info');
+    
+    try {
+        const cpf = dadosValidacao.faturado.cpf.replace(/[^\d]/g, '');
+        const response = await fetch('/api/validar-faturado/?cpf=' + encodeURIComponent(cpf), {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        const resultado = await response.json();
+        
+        atualizarStatusFaturado(resultado);
+        
+        // Continuar para próxima validação
+        setTimeout(() => validarClassificacoes(), 1000);
+        
+    } catch (error) {
+        adicionarLog(`Erro ao validar faturado: ${error.message}`, 'error');
+        atualizarProgresso(50, 'Erro na validação do faturado');
+    }
+}
+
+async function validarClassificacoes() {
+    atualizarProgresso(75, 'Validando classificações...');
+    adicionarLog('Validando classificações...', 'info');
+    
+    if (!dadosValidacao.classificacao_despesa || dadosValidacao.classificacao_despesa.length === 0) {
+        adicionarLog('Nenhuma classificação para validar', 'info');
+        concluirValidacao();
+        return;
+    }
+    
+    try {
+        for (let i = 0; i < dadosValidacao.classificacao_despesa.length; i++) {
+            const descricao = dadosValidacao.classificacao_despesa[i];
+            const response = await fetch('/api/validar-classificacao/?descricao=' + encodeURIComponent(descricao));
+            const resultado = await response.json();
+            
+            atualizarStatusClassificacao(i, descricao, resultado);
+            
+            // Pequena pausa entre validações
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        concluirValidacao();
+        
+    } catch (error) {
+        adicionarLog(`Erro ao validar classificações: ${error.message}`, 'error');
+        atualizarProgresso(75, 'Erro na validação das classificações');
+    }
+}
+
+function concluirValidacao() {
+    // Decide UI após validar classificações
+    const temPendentes = cadastrosPendentes.fornecedor ||
+                         cadastrosPendentes.faturado ||
+                         cadastrosPendentes.classificacoes.length > 0;
+
+    if (temPendentes) {
+        document.getElementById('botoes-criacao').style.display = 'block';
+        atualizarProgresso(90, 'Há cadastros pendentes para criação.');
+        adicionarLog('Validação concluída. Crie os cadastros pendentes.', 'warning');
+    } else {
+        document.getElementById('finalizar-section').style.display = 'block';
+        atualizarProgresso(100, 'Validação concluída. Pronto para criar lançamento.');
+        adicionarLog('Todos os cadastros validados. Pronto para finalizar.', 'success');
+    }
+}
+
+// Funções para atualizar status na interface
+function atualizarStatusFornecedor(resultado) {
+    const statusElement = document.getElementById('fornecedor-status');
+    
+    if (resultado.existe) {
+        statusElement.className = 'status success';
+        statusElement.innerHTML = '<span class="status-icon">✓</span><span class="status-text">Cadastro existente</span>';
+        adicionarLog(`Fornecedor encontrado: ${resultado.mensagem}`, 'success');
+    } else {
+        statusElement.className = 'status error';
+        statusElement.innerHTML = '<span class="status-icon">✗</span><span class="status-text">Cadastro não existe</span>';
+        cadastrosPendentes.fornecedor = true;
+        adicionarBotaoCriacao('fornecedor', 'Fornecedor', {
+            cnpj: dadosValidacao.fornecedor.cnpj,
+            razao_social: dadosValidacao.fornecedor.razao_social,
+            nome_fantasia: dadosValidacao.fornecedor.nome_fantasia || ''
+        });
+        adicionarLog(`Fornecedor não encontrado: ${resultado.mensagem}`, 'warning');
+    }
+}
+
+function atualizarStatusFaturado(resultado) {
+    const statusElement = document.getElementById('faturado-status');
+    
+    if (resultado.existe) {
+        statusElement.className = 'status success';
+        statusElement.innerHTML = '<span class="status-icon">✓</span><span class="status-text">Cadastro existente</span>';
+        adicionarLog(`Faturado encontrado: ${resultado.mensagem}`, 'success');
+    } else {
+        statusElement.className = 'status error';
+        statusElement.innerHTML = '<span class="status-icon">✗</span><span class="status-text">Cadastro não existe</span>';
+        cadastrosPendentes.faturado = true;
+        adicionarBotaoCriacao('faturado', 'Faturado', {
+            cpf: dadosValidacao.faturado.cpf,
+            nome: dadosValidacao.faturado.nome_completo
+        });
+        adicionarLog(`Faturado não encontrado: ${resultado.mensagem}`, 'warning');
+    }
+}
+
+function atualizarStatusClassificacao(index, descricao, resultado) {
+    const classificacoes = document.querySelectorAll('.classificacao-item');
+    const statusElement = classificacoes[index].querySelector('.status');
+    
+    if (resultado.existe) {
+        statusElement.className = 'status success';
+        statusElement.innerHTML = '<span class="status-icon">✓</span><span class="status-text">Existe</span>';
+        adicionarLog(`Classificação encontrada: ${resultado.mensagem}`, 'success');
+    } else {
+        statusElement.className = 'status error';
+        statusElement.innerHTML = '<span class="status-icon">✗</span><span class="status-text">Não existe</span>';
+        cadastrosPendentes.classificacoes.push({
+            index: index,
+            descricao: descricao
+        });
+        adicionarBotaoCriacao('classificacao', `Classificação: ${descricao}`, {
+            descricao: descricao,
+            tipo: 'DESPESA'
+        });
+        adicionarLog(`Classificação não encontrada: ${resultado.mensagem}`, 'warning');
+    }
+}
+
+// Função para adicionar botões de criação
+function adicionarBotaoCriacao(tipo, titulo, dados) {
+    const botoesCriacao = document.getElementById('botoes-criacao');
+    const listaBotoes = document.getElementById('lista-botoes-criacao');
+    
+    botoesCriacao.style.display = 'block';
+    
+    const botao = document.createElement('button');
+    botao.className = 'btn-create-item';
+    botao.id = `btn-criar-${tipo}-${Date.now()}`;
+    botao.innerHTML = `<span class="btn-icon">+</span> Criar ${titulo}`;
+    botao.onclick = () => criarCadastro(tipo, titulo, dados, botao);
+    
+    listaBotoes.appendChild(botao);
+}
+
+// Função para criar cadastro no banco
+async function criarCadastro(tipo, titulo, dados, botaoElemento) {
+    botaoElemento.disabled = true;
+    botaoElemento.innerHTML = '<span class="loading"></span> Criando...';
+    
+    adicionarLog(`Iniciando criação de ${titulo}...`, 'info');
+    
+    try {
+        let endpoint;
+        let dadosEnvio = { ...dados };
+        
+        // Preparar dados específicos para cada tipo
+        if (tipo === 'fornecedor') {
+            endpoint = '/api/criar-fornecedor/';
+            dadosEnvio.tipo = 'FORNECEDOR';
+        } else if (tipo === 'faturado') {
+            endpoint = '/api/criar-faturado/';
+            dadosEnvio.tipo = 'FATURADO';
+            dadosEnvio.nome_completo = dados.nome;
+        } else if (tipo === 'classificacao') {
+            endpoint = '/api/criar-classificacao/';
+        }
+        
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(dadosEnvio)
+        });
+        
+        const resultado = await response.json();
+        
+        if (resultado.sucesso) {
+            adicionarLog(`${titulo} criado com sucesso! ID: ${resultado.id}`, 'success');
+            botaoElemento.innerHTML = '<span class="btn-icon">✓</span> Criado com sucesso';
+            botaoElemento.style.background = '#28a745';
+            botaoElemento.style.color = 'white';
+            botaoElemento.style.borderColor = '#28a745';
+            
+            // Atualizar status pendente
+            if (tipo === 'fornecedor') {
+                cadastrosPendentes.fornecedor = false;
+            } else if (tipo === 'faturado') {
+                cadastrosPendentes.faturado = false;
+            } else if (tipo === 'classificacao') {
+                // Remover da lista de pendentes
+                cadastrosPendentes.classificacoes = cadastrosPendentes.classificacoes.filter(
+                    c => c.descricao !== dados.descricao
+                );
+            }
+            
+            verificarCadastrosPendentes();
+        } else {
+            adicionarLog(`Erro ao criar ${titulo}: ${resultado.erro}`, 'error');
+            botaoElemento.disabled = false;
+            botaoElemento.innerHTML = `<span class="btn-icon">+</span> Tentar novamente - ${titulo}`;
+        }
+        
+    } catch (error) {
+        adicionarLog(`Erro ao criar ${titulo}: ${error.message}`, 'error');
+        botaoElemento.disabled = false;
+        botaoElemento.innerHTML = `<span class="btn-icon">+</span> Tentar novamente - ${titulo}`;
+    }
+}
+
+// Função para verificar se ainda há cadastros pendentes
+function verificarCadastrosPendentes() {
+    const temPendentes = cadastrosPendentes.fornecedor || 
+                        cadastrosPendentes.faturado || 
+                        cadastrosPendentes.classificacoes.length > 0;
+    
+    if (!temPendentes) {
+        document.getElementById('finalizar-section').style.display = 'block';
+        adicionarLog('Todos os cadastros foram validados/criados!', 'success');
+    }
+}
+
+// Função para finalizar e criar lançamento
+async function finalizarProcesso() {
+    const btnFinalizar = document.getElementById('btn-finalizar');
+    btnFinalizar.disabled = true;
+    btnFinalizar.innerHTML = '<span class="loading"></span> Processando...';
+    
+    adicionarLog('Iniciando criação do lançamento...', 'info');
+    
+    try {
+        const response = await fetch('/api/criar-lancamento/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(dadosValidacao)
+        });
+        
+        const resultado = await response.json();
+        
+        if (resultado.sucesso) {
+            adicionarLog(`Lançamento criado com sucesso! ID: ${resultado.id}`, 'success');
+            alert(`Processo concluído com sucesso! Lançamento criado com ID: ${resultado.id}`);
+            
+            // Opcional: redirecionar ou limpar interface
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 3000);
+        } else {
+            adicionarLog(`Erro ao criar lançamento: ${resultado.erro}`, 'error');
+            btnFinalizar.disabled = false;
+            btnFinalizar.innerHTML = '<span class="btn-icon">✓</span> Todos os Cadastros Validados - Criar Lançamento';
+        }
+        
+    } catch (error) {
+        adicionarLog(`Erro ao criar lançamento: ${error.message}`, 'error');
+        btnFinalizar.disabled = false;
+        btnFinalizar.innerHTML = '<span class="btn-icon">✓</span> Todos os Cadastros Validados - Criar Lançamento';
+    }
+}
+
+// Funções auxiliares
+function atualizarProgresso(porcentagem, texto) {
+    document.getElementById('progress-fill').style.width = porcentagem + '%';
+    document.getElementById('progress-text').textContent = texto;
+}
+
+function adicionarLog(mensagem, tipo) {
+    const logContent = document.getElementById('log-conteudo');
+    const logEntry = document.createElement('div');
+    logEntry.className = `log-entry ${tipo}`;
+    
+    const timestamp = new Date().toLocaleTimeString();
+    logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${mensagem}`;
+    
+    logContent.appendChild(logEntry);
+    logContent.scrollTop = logContent.scrollHeight;
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,143 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="result-section">
+    <h2>Dados Extraídos com Sucesso!</h2>
+
+    <div class="tabs">
+        <button class="tab-button active" onclick="openTab(event,'json')">Visualização em JSON</button>
+        <button class="tab-button" onclick="openTab(event,'formatted')">Visualização Formatada</button>
+    </div>
+
+    {{ dados|json_script:"dados-json" }}
+
+    <div id="json" class="tab-content active">
+        <div class="json-view">
+            <pre id="json-content" class="json-block"></pre>
+            <button class="btn-copy" onclick="copyToClipboard()">Copiar JSON</button>
+        </div>
+    </div>
+
+    <div id="formatted" class="tab-content">
+        <div class="formatted-grid">
+            <div class="data-group">
+                <h4>Fornecedor</h4>
+                <p><strong>Razão Social:</strong> {{ dados.fornecedor.razao_social|default:"N/A" }}</p>
+                <p><strong>Fantasia:</strong> {{ dados.fornecedor.nome_fantasia|default:"N/A" }}</p>
+                <p><strong>CNPJ:</strong> {{ dados.fornecedor.cnpj|default:"N/A" }}</p>
+            </div>
+
+            <div class="data-group">
+                <h4>Faturado</h4>
+                <p><strong>Nome Completo:</strong> {{ dados.faturado.nome_completo|default:"N/A" }}</p>
+                <p><strong>CPF:</strong> {{ dados.faturado.cpf|default:"N/A" }}</p>
+            </div>
+
+            <div class="data-group">
+                <h4>Nota Fiscal</h4>
+                <p><strong>Número da Nota Fiscal:</strong> {{ dados.numero_nota_fiscal|default:"N/A" }}</p>
+                <p><strong>Data de Emissão:</strong> {{ dados.data_emissao|default:"N/A" }}</p>
+            </div>
+
+            <div class="data-group">
+                <h4>Produtos</h4>
+                {% if dados.descricao_produtos %}
+                    <ul>
+                        {% for item in dados.descricao_produtos %}
+                            <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="data-group">
+                <h4>Pagamento</h4>
+                <p><strong>Quantidade de Parcelas:</strong> {{ dados.quantidade_parcelas|default:"N/A" }}</p>
+                <p><strong>Data de Vencimento:</strong> {{ dados.data_vencimento|default:"N/A" }}</p>
+                <p><strong>Valor Total:</strong> R$ {{ dados.valor_total|default:"N/A" }}</p>
+            </div>
+
+            <div class="data-group">
+                <h4>Classificação da Despesa</h4>
+                {% if dados.classificacao_despesa %}
+                    <ul>
+                        {% for c in dados.classificacao_despesa %}
+                            <li>{{ c }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>N/A</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <form method="post" action="{% url 'redirecionar_validacao' %}" style="display: inline-block;">
+            {% csrf_token %}
+            <input type="hidden" name="fornecedor_nome" value="{{ dados.fornecedor.razao_social|default:'' }}">
+            <input type="hidden" name="fornecedor_cnpj" value="{{ dados.fornecedor.cnpj|default:'' }}">
+            <input type="hidden" name="faturado_nome" value="{{ dados.faturado.nome_completo|default:'' }}">
+            <input type="hidden" name="faturado_cpf" value="{{ dados.faturado.cpf|default:'' }}">
+            <input type="hidden" name="nf_numero" value="{{ dados.numero_nota_fiscal|default:'' }}">
+            <input type="hidden" name="nf_valor" value="{{ dados.valor_total|default:'' }}">
+            <input type="hidden" name="nf_data" value="{{ dados.data_emissao|default:'' }}">
+            {% for classificacao in dados.classificacao_despesa %}
+                <input type="hidden" name="classificacoes[]" value="{{ classificacao }}">
+            {% endfor %}
+            {% for produto in dados.descricao_produtos %}
+                <input type="hidden" name="produtos[]" value="{{ produto }}">
+            {% endfor %}
+            <button type="submit" class="btn-validate">Validar Cadastros</button>
+        </form>
+        <a href="/" class="btn-new">Extrair Nova NF</a>
+    </div>
+</div>
+
+<style>
+.result-section { background:#fff; padding:24px; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+.tabs { display:flex; gap:8px; margin-bottom:16px; }
+.tab-button { border:1px solid #ddd; background:#f8f8f8; padding:8px 12px; border-radius:8px; cursor:pointer; }
+.tab-button.active { background:#eef5ff; border-color:#94b8ff; }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+.json-view { position:relative; }
+.json-block { background:#0f172a; color:#e5e7eb; padding:16px; border-radius:10px; overflow:auto; max-height:60vh; }
+.btn-copy { margin-top:8px; display:inline-block; }
+.formatted-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; }
+.data-group { background:#fafafa; border:1px solid #eee; border-radius:12px; padding:14px; }
+.data-group h4 { margin-top:0; margin-bottom:8px; }
+.actions { margin-top:24px; text-align:center; }
+.btn-new { display:inline-block; padding:10px 20px; background:#2563eb; color:#fff; border-radius:8px; text-decoration:none; margin-left:10px; }
+.btn-new:hover { background:#1d4ed8; }
+.btn-validate { display:inline-block; padding:10px 20px; background:#28a745; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:16px; }
+.btn-validate:hover { background:#218838; }
+</style>
+
+<script>
+(function () {
+    try {
+        var data = JSON.parse(document.getElementById('dados-json').textContent);
+        document.getElementById('json-content').textContent = JSON.stringify(data, null, 2);
+    } catch(e) {
+        document.getElementById('json-content').textContent = 'Erro ao renderizar JSON.';
+    }
+})();
+
+function openTab(ev, tabName) {
+    var tabs = document.getElementsByClassName('tab-content');
+    var buttons = document.getElementsByClassName('tab-button');
+    for (var i=0;i<tabs.length;i++) tabs[i].classList.remove('active');
+    for (var j=0;j<buttons.length;j++) buttons[j].classList.remove('active');
+    document.getElementById(tabName).classList.add('active');
+    ev.currentTarget.classList.add('active');
+}
+
+function copyToClipboard() {
+    var text = document.getElementById('json-content').textContent;
+    navigator.clipboard.writeText(text).then(function(){ alert('JSON copiado!'); });
+}
+</script>
+{% endblock %}

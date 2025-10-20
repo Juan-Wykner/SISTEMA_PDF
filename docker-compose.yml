@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  web:
+    build: .
+    container_name: sistema_pdf_web
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=sistema_pdf.settings
+      - DEBUG=False
+      - ALLOWED_HOSTS=*
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    command: gunicorn sistema_pdf.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    restart: unless-stopped
+
+volumes:
+  static_volume:
+  media_volume:
+
+

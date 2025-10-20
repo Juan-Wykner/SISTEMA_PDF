@@ -1,0 +1,69 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="upload-section">
+    <h2>Upload do PDF</h2>
+    
+    <form method="post" enctype="multipart/form-data" id="upload-form">
+        {% csrf_token %}
+        
+        <div class="file-upload-area" id="file-upload-area">
+            <div class="upload-icon">📄</div>
+            <h3>Selecionar Arquivo PDF</h3>
+            <p>Clique no botão abaixo para escolher um arquivo do seu computador</p>
+            <button type="button" class="btn-select" onclick="document.getElementById('pdf-input').click()">
+                Escolher Arquivo
+            </button>
+            {{ form.pdf_file }}
+        </div>
+        
+        <div id="file-info" style="display: none; margin-top: 20px;">
+            <div class="selected-file">
+                <span class="file-icon">📋</span>
+                <span id="file-name">Nenhum arquivo selecionado</span>
+                <span id="file-size"></span>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn-extract" id="btn-extract" style="display: none;">
+            EXTRAIR DADOS
+        </button>
+    </form>
+</div>
+
+<div id="loading" style="display: none;">
+    <p>Processando PDF... Aguarde.</p>
+</div>
+
+<script>
+document.getElementById('pdf-input').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const fileInfo = document.getElementById('file-info');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    const btnExtract = document.getElementById('btn-extract');
+    const uploadArea = document.getElementById('file-upload-area');
+    
+    if (file) {
+        fileName.textContent = file.name;
+        
+        const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+        fileSize.textContent = ` (${sizeInMB} MB)`;
+        
+        fileInfo.style.display = 'block';
+        btnExtract.style.display = 'block';
+        uploadArea.style.borderColor = '#27ae60';
+        uploadArea.style.backgroundColor = '#f8fff8';
+    } else {
+        fileInfo.style.display = 'none';
+        btnExtract.style.display = 'none';
+        uploadArea.style.borderColor = '#ddd';
+        uploadArea.style.backgroundColor = '#f9f9f9';
+    }
+});
+
+document.getElementById('upload-form').addEventListener('submit', function() {
+    document.getElementById('loading').style.display = 'block';
+});
+</script>
+{% endblock %}
