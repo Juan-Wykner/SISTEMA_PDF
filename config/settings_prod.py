@@ -44,8 +44,8 @@ LOGGING = {
     },
 }
 
-# Ensure SECRET_KEY is set
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-production-key-replace-me')
+# Ensure SECRET_KEY is set (fallback to DJANGO_SECRET_KEY if provided)
+SECRET_KEY = os.getenv('SECRET_KEY') or os.getenv('DJANGO_SECRET_KEY') or 'django-insecure-production-key-replace-me'
 
 # Disable debug toolbar and other development tools
 if 'debug_toolbar' in INSTALLED_APPS:
