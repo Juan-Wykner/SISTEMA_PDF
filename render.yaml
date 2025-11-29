@@ -9,6 +9,8 @@ services:
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: config.settings_prod
+      - key: PYTHONUNBUFFERED
+        value: 1
       - key: DJANGO_SECRET_KEY
         sync: false
       - key: GEMINI_API_KEY

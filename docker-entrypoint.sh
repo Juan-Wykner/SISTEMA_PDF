@@ -36,7 +36,13 @@ python - <<'PY'
 import django
 django.setup()
 from django.db import connection
-print('TABLES', ','.join(connection.introspection.table_names()))
+tables = set(connection.introspection.table_names())
+print('TABLES', ','.join(sorted(tables)))
+missing = {'pessoas','classificacao','movimentocontas','parcelacontas','movimento_classificacao'} - tables
+if missing:
+    import sys
+    print('MISSING_TABLES', ','.join(sorted(missing)))
+    sys.exit(1)
 PY
 
 # Create superuser if it doesn't exist
