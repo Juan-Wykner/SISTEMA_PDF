@@ -1,0 +1,96 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/rag.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="rag-container">
+    <div class="rag-header">
+        <h1 class="rag-title">🔍 Assistente Financeiro</h1>
+        <p class="rag-subtitle">Faça perguntas sobre seus dados financeiros e receba respostas inteligentes</p>
+    </div>
+    
+    {% if error %}
+        <div class="alert alert-error">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-content">
+                <h4>Erro</h4>
+                <p>{{ error }}</p>
+            </div>
+        </div>
+    {% endif %}
+    
+    <div class="rag-card">
+        <form method="post" class="rag-form">
+            {% csrf_token %}
+            
+            <div class="question-section">
+                <label for="pergunta" class="question-label">
+                    <span class="label-icon">💬</span>
+                    Sua pergunta:
+                </label>
+                <textarea 
+                    name="pergunta" 
+                    id="pergunta" 
+                    class="question-input" 
+                    placeholder="Digite sua pergunta sobre os dados financeiros..."
+                    rows="3"
+                    required>{{ pergunta|default:"" }}</textarea>
+                
+                <div class="question-hints">
+                    <span class="hint">Dicas:</span>
+                    <span class="hint-item" role="button">Quais são as despesas totais?</span>
+                    <span class="hint-item" role="button">Qual é o valor total das notas?</span>
+                    <span class="hint-item" role="button">Mostre os fornecedores</span>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-consult">
+                <span class="btn-icon">🔍</span>
+                Consultar Assistente
+            </button>
+        </form>
+    </div>
+    
+    {% if resposta %}
+        <div class="results-section">
+            <div class="response-card">
+                <div class="response-header">
+                    <span class="response-icon">🤖</span>
+                    <h3>Resposta do Assistente</h3>
+                </div>
+                <div class="response-content">
+                    {{ resposta|linebreaks }}
+                </div>
+            </div>
+            
+            {% if evidencias %}
+                <div class="evidence-section">
+                    <h3 class="evidence-title">
+                        <span class="evidence-icon">📊</span>
+                        Evidências Encontradas
+                    </h3>
+                    <div class="evidence-grid">
+                        {% for evidencia in evidencias %}
+                            <div class="evidence-card">
+                                <div class="evidence-header">
+                                    <h4>{{ evidencia.titulo }}</h4>
+                                </div>
+                                <div class="evidence-content">
+                                    <pre>{{ evidencia.conteudo }}</pre>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/rag.js' %}"></script>
+{% endblock %}

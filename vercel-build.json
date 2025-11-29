@@ -1,0 +1,10 @@
+{
+  "buildCommand": "python manage.py collectstatic --noinput",
+  "outputDirectory": "staticfiles",
+  "framework": "django",
+  "functions": {
+    "config/wsgi_vercel.py": {
+      "runtime": "python3.9"
+    }
+  }
+}

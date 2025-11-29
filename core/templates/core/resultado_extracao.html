@@ -1,0 +1,102 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/css/resultado_extracao.css">
+
+<div class="result-section">
+    <h2>Dados Extraídos com Sucesso!</h2>
+
+    <div class="tabs">
+        <button class="tab-button active" onclick="openTab(event,'json')">Visualização em JSON</button>
+        <button class="tab-button" onclick="openTab(event,'formatted')">Visualização Formatada</button>
+    </div>
+
+    {{ dados|json_script:"dados-json" }}
+
+    <div id="json" class="tab-content active">
+        <div class="json-view">
+            <pre id="json-content" class="json-block"></pre>
+            <button class="btn-copy" onclick="copyToClipboard()">Copiar JSON</button>
+        </div>
+    </div>
+
+    <div id="formatted" class="tab-content">
+        <div class="formatted-grid">
+            <div class="data-group">
+                <h4>Fornecedor</h4>
+                <p><strong>Razão Social:</strong> {{ dados.fornecedor.razao_social|default:"N/A" }}</p>
+                <p><strong>Fantasia:</strong> {{ dados.fornecedor.nome_fantasia|default:"N/A" }}</p>
+                <p><strong>CNPJ:</strong> {{ dados.fornecedor.cnpj|default:"N/A" }}</p>
+            </div>
+
+            <div class="data-group">
+                <h4>Faturado</h4>
+                <p><strong>Nome Completo:</strong> {{ dados.faturado.nome_completo|default:"N/A" }}</p>
+                <p><strong>CPF:</strong> {{ dados.faturado.cpf|default:"N/A" }}</p>
+            </div>
+
+            <div class="data-group">
+                <h4>Nota Fiscal</h4>
+                <p><strong>Número da Nota Fiscal:</strong> {{ dados.numero_nota_fiscal|default:"N/A" }}</p>
+                <p><strong>Data de Emissão:</strong> {{ dados.data_emissao|default:"N/A" }}</p>
+            </div>
+
+            <div class="data-group">
+                <h4>Produtos</h4>
+                {% if dados.descricao_produtos %}
+                    <ul>
+                        {% for item in dados.descricao_produtos %}
+                            <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="data-group">
+                <h4>Pagamento</h4>
+                <p><strong>Quantidade de Parcelas:</strong> {{ dados.quantidade_parcelas|default:"N/A" }}</p>
+                <p><strong>Data de Vencimento:</strong> {{ dados.data_vencimento|default:"N/A" }}</p>
+                <p><strong>Valor Total:</strong> R$ {{ dados.valor_total|default:"N/A" }}</p>
+            </div>
+
+            <div class="data-group">
+                <h4>Classificação da Despesa</h4>
+                {% if dados.classificacao_despesa %}
+                    <ul>
+                        {% for c in dados.classificacao_despesa %}
+                            <li>{{ c }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>N/A</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <form method="post" action="{% url 'redirecionar_validacao' %}" style="display: inline-block;">
+            {% csrf_token %}
+            <input type="hidden" name="fornecedor_nome" value="{{ dados.fornecedor.razao_social|default:'' }}">
+            <input type="hidden" name="fornecedor_cnpj" value="{{ dados.fornecedor.cnpj|default:'' }}">
+            <input type="hidden" name="faturado_nome" value="{{ dados.faturado.nome_completo|default:'' }}">
+            <input type="hidden" name="faturado_cpf" value="{{ dados.faturado.cpf|default:'' }}">
+            <input type="hidden" name="nf_numero" value="{{ dados.numero_nota_fiscal|default:'' }}">
+            <input type="hidden" name="nf_valor" value="{{ dados.valor_total|default:'' }}">
+            <input type="hidden" name="nf_data" value="{{ dados.data_emissao|default:'' }}">
+            {% for classificacao in dados.classificacao_despesa %}
+                <input type="hidden" name="classificacoes[]" value="{{ classificacao }}">
+            {% endfor %}
+            {% for produto in dados.descricao_produtos %}
+                <input type="hidden" name="produtos[]" value="{{ produto }}">
+            {% endfor %}
+            <button type="submit" class="btn-validate">Validar Cadastros</button>
+        </form>
+        <a href="/" class="btn-new">Extrair Nova NF</a>
+    </div>
+</div>
+
+<script src="/static/js/resultado_extracao.js"></script>
+{% endblock %}

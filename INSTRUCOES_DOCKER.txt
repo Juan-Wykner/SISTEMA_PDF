@@ -1,0 +1,21 @@
+🐳 SISTEMA_PDF - Container Docker Completo
+
+ARQUIVOS CRIADOS:
+- sistema_pdf_container.tar.gz (Container completo comprimido)
+
+COMO IMPORTAR E EXECUTAR:
+
+1. Importar o container:
+   docker import sistema_pdf_container.tar.gz sistema_pdf:imported
+
+2. Executar o container:
+   docker run -d -p 8000:8000 --name sistema_pdf sistema_pdf:imported
+
+3. Acessar a aplicação:
+   http://localhost:8000
+
+INFORMAÇÕES:
+- Usuário admin: admin/admin123
+- Banco de dados: SQLite (já incluso)
+- Todos os arquivos estão dentro do container
+

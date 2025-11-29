@@ -1,0 +1,24 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="upload-section">
+  <h2>Escolha o que deseja fazer</h2>
+  <div class="menu-grid" style="margin-top:12px">
+    <a href="{% url 'upload_pdf' %}" class="menu-card">
+      <img src="{% static 'img/upload.svg' %}" alt="Upload" class="menu-icon" />
+      <div>
+        <h3>Upload de PDF</h3>
+        <p>Enviar arquivo e extrair dados</p>
+      </div>
+    </a>
+    <a href="{% url 'rag' %}" class="menu-card">
+      <img src="{% static 'img/rag.svg' %}" alt="RAG" class="menu-icon" />
+      <div>
+        <h3>RAG</h3>
+        <p>Consultar conhecimento e validar informações</p>
+      </div>
+    </a>
+  </div>
+</div>
+{% endblock %}

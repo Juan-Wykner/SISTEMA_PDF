@@ -1,0 +1,112 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="/static/css/validacao_interativa.css">
+
+<div class="validation-interface">
+    <div class="container-validation">
+        <h1>Validação de Cadastros</h1>
+        <p class="subtitle">Verifique os cadastros extraídos do PDF e crie os que não existem no banco de dados</p>
+        
+        <!-- Seção de Progresso -->
+        <div id="progress-section" class="progress-section">
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            <p id="progress-text">Preparando validação...</p>
+        </div>
+
+        <!-- Dados do PDF -->
+        <div class="pdf-data-section">
+            <h2>Dados Extraídos do PDF</h2>
+            <div class="data-cards">
+                <div class="data-card">
+                    <h3>Fornecedor</h3>
+                    <div class="data-item">
+                        <span class="label">Razão Social:</span>
+                        <span id="fornecedor-razao" class="value">{{ dados_pdf.fornecedor.razao_social|default:"N/A" }}</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="label">CNPJ:</span>
+                        <span id="fornecedor-cnpj" class="value">{{ dados_pdf.fornecedor.cnpj|default:"N/A" }}</span>
+                    </div>
+                    <div id="fornecedor-status" class="status pending">
+                        <span class="status-icon">⏳</span>
+                        <span class="status-text">Aguardando validação</span>
+                    </div>
+                </div>
+
+                <div class="data-card">
+                    <h3>Faturado</h3>
+                    <div class="data-item">
+                        <span class="label">Nome:</span>
+                        <span id="faturado-nome" class="value">{{ dados_pdf.faturado.nome|default:"N/A" }}</span>
+                    </div>
+                    <div class="data-item">
+                        <span class="label">CPF:</span>
+                        <span id="faturado-cpf" class="value">{{ dados_pdf.faturado.cpf|default:"N/A" }}</span>
+                    </div>
+                    <div id="faturado-status" class="status pending">
+                        <span class="status-icon">⏳</span>
+                        <span class="status-text">Aguardando validação</span>
+                    </div>
+                </div>
+
+                <div class="data-card">
+                    <h3>Classificações</h3>
+                    <div id="classificacoes-list">
+                        {% if dados_pdf.classificacoes %}
+                            {% for classificacao in dados_pdf.classificacoes %}
+                            <div class="classificacao-item" data-descricao="{{ classificacao }}">
+                                <span class="classificacao-text">{{ classificacao }}</span>
+                                <div class="status pending">
+                                    <span class="status-icon">⏳</span>
+                                    <span class="status-text">Aguardando</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="no-data">Nenhuma classificação encontrada</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Ações -->
+        <div class="actions-section">
+            <button id="btn-iniciar-validacao" class="btn-primary" onclick="iniciarValidacao()">
+                <span class="btn-icon">🔍</span>
+                Iniciar Validação
+            </button>
+            
+            <div id="botoes-criacao" class="creation-buttons" style="display: none;">
+                <h3>Criar Cadastros Necessários</h3>
+                <div id="lista-botoes-criacao" class="buttons-grid">
+                    <!-- Botões de criação serão adicionados aqui dinamicamente -->
+                </div>
+            </div>
+
+            <div id="finalizar-section" class="finalizar-section" style="display: none;">
+                <button id="btn-finalizar" class="btn-success" onclick="finalizarProcesso()">
+                    <span class="btn-icon">✓</span>
+                    Todos os Cadastros Validados - Criar Lançamento
+                </button>
+            </div>
+        </div>
+
+        <!-- Mensagens de Log -->
+        <div id="log-mensagens" class="log-section">
+            <h3>Log de Validações</h3>
+            <div id="log-conteudo" class="log-content">
+                <!-- Mensagens serão adicionadas aqui -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dados em JSON para uso JavaScript -->
+{{ dados_pdf|json_script:"dados-json" }}
+
+<script src="/static/js/validacao_interativa.js"></script>
+{% endblock %}

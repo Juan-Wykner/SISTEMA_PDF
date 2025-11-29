@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extrator de Dados de Nota Fiscal</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% url 'home' as home_url %}
+    {% url 'upload_pdf' as upload_url %}
+    {% url 'rag' as rag_url %}
+    {% url 'interface_validacao' as valid_url %}
+    <nav class="nav">
+        <div class="nav-inner">
+            <a class="nav-brand" href="{{ home_url }}">Extrator NF</a>
+            <div class="nav-links">
+                <a href="{{ upload_url }}" class="nav-link {% if request.path == upload_url %}active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 16v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Upload
+                </a>
+                <a href="{{ rag_url }}" class="nav-link {% if request.path == rag_url %}active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    RAG
+                </a>
+                <a href="{{ valid_url }}" class="nav-link {% if request.path == valid_url %}active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Validação
+                </a>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <header>
+            <h1>Extrator de Dados de Nota Fiscal</h1>
+            <p>Extraia com facilidade dados de notas fiscais em PDF</p>
+        </header>
+        
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+        
+        <footer>
+            <p>Universidade de Rio Verde - Juan Wykner Alves Gomes - 6º Periodo </p>
+        </footer>
+    </div>
+    
+    <script src="{% static 'js/script.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
