@@ -21,13 +21,42 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# Database - SQLite for simplicity in production
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+# Database: prefer Postgres if DATABASE_URL is set; fallback to SQLite
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL:
+    try:
+        from urllib.parse import urlparse, parse_qs
+        parsed = urlparse(DATABASE_URL)
+        db_name = parsed.path.lstrip('/')
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': db_name,
+                'USER': parsed.username,
+                'PASSWORD': parsed.password,
+                'HOST': parsed.hostname,
+                'PORT': parsed.port or '5432',
+                'CONN_MAX_AGE': 600,
+                'OPTIONS': {
+                    'sslmode': 'require'
+                }
+            }
+        }
+    except Exception:
+        # Fallback to SQLite if parsing fails
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+            }
+        }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
     }
-}
 
 # Logging configuration for production
 LOGGING = {
