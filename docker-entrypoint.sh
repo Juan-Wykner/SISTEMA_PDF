@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/bin/sh
+set -e
 
 # Wait for database to be available (if using PostgreSQL)
 if [ "$DATABASE_URL" ]; then
