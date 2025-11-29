@@ -4,5 +4,5 @@ whitenoise==6.7.0
 pdfplumber==0.11.3
 python-decouple==3.8
 google-generativeai==0.3.0
-psycopg2-binary==2.9.9
+psycopg[binary]==3.1.19
 django-environ==0.11.2
