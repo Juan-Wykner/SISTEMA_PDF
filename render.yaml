@@ -9,9 +9,14 @@ services:
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: config.settings_prod
-      - key: PORT
-        value: 8000
       - key: DJANGO_SECRET_KEY
         sync: false
       - key: GEMINI_API_KEY
         sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sistema-pdf-db
+          property: connectionString
+databases:
+  - name: sistema-pdf-db
+    plan: free
