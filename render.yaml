@@ -3,7 +3,7 @@ services:
     name: sistema-pdf
     env: docker
     dockerfilePath: Dockerfile
-    dockerCommand: gunicorn config.wsgi:application --workers=2 --bind 0.0.0.0:$PORT
+    dockerCommand: gunicorn config.wsgi:application --workers=1 --bind 0.0.0.0:$PORT
     autoDeploy: true
     plan: free
     envVars:
@@ -19,6 +19,12 @@ services:
         fromDatabase:
           name: sistema-pdf-db
           property: connectionString
+  - type: worker
+    name: sistema-pdf-migrations
+    env: docker
+    dockerfilePath: Dockerfile
+    dockerCommand: python manage.py migrate --noinput && python manage.py showmigrations core
+    autoDeploy: true
 databases:
   - name: sistema-pdf-db
     plan: free
