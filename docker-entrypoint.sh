@@ -22,6 +22,7 @@ u = urllib.parse.urlparse(os.environ.get('DATABASE_URL', ''))
 print(u.username or 'postgres')
 PY
 )
+    echo "DB ${DB_HOST}:${DB_PORT} user=${DB_USER}"
     while ! pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" 2>/dev/null; do
       sleep 1
     done
@@ -30,6 +31,13 @@ fi
 # Run migrations
 echo "Executando migrações..."
 python manage.py migrate --noinput
+python manage.py showmigrations core
+python - <<'PY'
+import django
+django.setup()
+from django.db import connection
+print('TABLES', ','.join(connection.introspection.table_names()))
+PY
 
 # Create superuser if it doesn't exist
 echo "Verificando superusuário..."
