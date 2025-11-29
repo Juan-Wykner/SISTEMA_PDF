@@ -215,6 +215,61 @@ from django.db import transaction
 from datetime import datetime
 from .models import Pessoas, Classificacao, MovimentoContas, ParcelaContas, MovimentoClassificacao
 
+def db_health(request):
+    """
+    Endpoint de saúde do banco: resolve DNS e testa SELECT 1.
+    Não expõe segredos.
+    """
+    import os
+    import socket
+    from django.conf import settings
+    from django.db import connections
+
+    # Extrair host/port de DATABASE_URL ou DB_* sem expor senha
+    host = os.getenv('DB_HOST')
+    port = os.getenv('DB_PORT', '5432')
+    user = os.getenv('DB_USER', 'postgres')
+    dburl = os.getenv('DATABASE_URL')
+    if dburl and not host:
+        try:
+            from urllib.parse import urlparse
+            u = urlparse(dburl)
+            host = u.hostname
+            port = str(u.port or '5432')
+            user = u.username or user
+        except Exception:
+            pass
+
+    result = {
+        'host': host or '',
+        'port': port,
+        'user': user,
+        'dns_resolved': False,
+        'addresses': [],
+        'db_connect': False,
+        'error': None,
+    }
+
+    try:
+        if host:
+            infos = socket.getaddrinfo(host, int(port))
+            result['dns_resolved'] = True
+            result['addresses'] = list({i[4][0] for i in infos})
+    except Exception as e:
+        result['error'] = f'DNS error: {e}'
+
+    # Teste de conexão SELECT 1
+    try:
+        conn = connections['default']
+        with conn.cursor() as cur:
+            cur.execute('SELECT 1')
+            cur.fetchone()
+        result['db_connect'] = True
+    except Exception as e:
+        result['error'] = f'DB connect error: {e}'
+
+    return JsonResponse(result)
+
 def validar_fornecedor_api(request):
     """
     API para validar fornecedor via GET (para interface AJAX)

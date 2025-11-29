@@ -20,6 +20,8 @@ urlpatterns = [
     path('api/criar-faturado/', views.criar_faturado, name='criar_faturado'),
     path('api/criar-classificacao/', views.criar_classificacao, name='criar_classificacao'),
     path('api/criar-lancamento/', views.criar_lancamento, name='criar_lancamento'),
+    # Health
+    path('health/db/', views.db_health, name='db_health'),
     
     # Redirecionamento para validação
     path('redirecionar-validacao/', views.redirecionar_validacao, name='redirecionar_validacao'),
