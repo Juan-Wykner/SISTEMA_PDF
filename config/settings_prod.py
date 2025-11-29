@@ -23,6 +23,27 @@ X_FRAME_OPTIONS = 'DENY'
 
 # Database: prefer Postgres if DATABASE_URL is set; fallback to SQLite
 DATABASE_URL = os.getenv('DATABASE_URL')
+def _pg_from_env():
+    host = os.getenv('DB_HOST')
+    name = os.getenv('DB_NAME')
+    user = os.getenv('DB_USER')
+    password = os.getenv('DB_PASSWORD')
+    port = os.getenv('DB_PORT', '5432')
+    if all([host, name, user, password]):
+        return {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': name,
+                'USER': user,
+                'PASSWORD': password,
+                'HOST': host,
+                'PORT': port,
+                'CONN_MAX_AGE': 600,
+                'OPTIONS': {'sslmode': 'require'},
+            }
+        }
+    return None
+
 if DATABASE_URL:
     try:
         from urllib.parse import urlparse, parse_qs
@@ -51,12 +72,16 @@ if DATABASE_URL:
             }
         }
 else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    _env_db = _pg_from_env()
+    if _env_db:
+        DATABASES = _env_db
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+            }
         }
-    }
 
 # Logging configuration for production
 LOGGING = {
