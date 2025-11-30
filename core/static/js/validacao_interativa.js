@@ -238,20 +238,25 @@ function atualizarStatusClassificacao(index, descricao, resultado) {
         adicionarLog(`Classificação encontrada: ${resultado.mensagem}`, 'success');
     } else if (resultado.existe && resultado.ativo === false) {
         statusElement.className = 'status warning';
-        statusElement.innerHTML = '<span class="status-icon">!</span><span class="status-text">Inativa</span> <button class="btn-create-item" id="btn-reativar-class-${index}">Reativar</button>';
-        const btn = document.getElementById(`btn-reativar-class-${index}`);
-        btn.onclick = async () => {
-            adicionarLog(`Reativando classificação ${descricao}...`, 'info');
-            const resp = await fetch('/api/reativar-classificacao/', {method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken': getCookie('csrftoken')},body: JSON.stringify({descricao, tipo:'DESPESA'})});
-            const rj = await resp.json();
-            if (rj.sucesso){
-                statusElement.className = 'status success';
-                statusElement.innerHTML = '<span class="status-icon">✓</span><span class="status-text">Reativada</span>';
-                adicionarLog('Classificação reativada com sucesso', 'success');
-            } else {
-                adicionarLog(`Falha ao reativar classificação: ${rj.erro}`, 'error');
-            }
-        };
+        const btnId = `btn-reativar-class-${index}`;
+        statusElement.innerHTML = `<span class="status-icon">!</span><span class="status-text">Inativa</span> <button class="btn-create-item" id="${btnId}">Reativar</button>`;
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.onclick = async () => {
+                adicionarLog(`Reativando classificação ${descricao}...`, 'info');
+                const resp = await fetch('/api/reativar-classificacao/', {method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken': getCookie('csrftoken')},body: JSON.stringify({descricao, tipo:'DESPESA'})});
+                const rj = await resp.json();
+                if (rj.sucesso){
+                    statusElement.className = 'status success';
+                    statusElement.innerHTML = '<span class="status-icon">✓</span><span class="status-text">Reativada</span>';
+                    adicionarLog('Classificação reativada com sucesso', 'success');
+                } else {
+                    adicionarLog(`Falha ao reativar classificação: ${rj.erro}`, 'error');
+                }
+            };
+        } else {
+            adicionarLog('Erro: botão de reativação não encontrado para classificação.', 'error');
+        }
     } else {
         statusElement.className = 'status error';
         statusElement.innerHTML = '<span class="status-icon">✗</span><span class="status-text">Não existe</span>';
