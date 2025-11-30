@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Gerenciamento BD</title>
+<link rel="stylesheet" href="{% static 'css/gerenciamento_bd.css' %}">
+</head>
+<body>
+<div class="container">
+<header class="header">
+<h1>Gerenciamento BD</h1>
+<div class="tabs">
+<button class="tab active" data-module="pessoas">Pessoas</button>
+<button class="tab" data-module="classificacao">Classificação</button>
+<button class="tab" data-module="contas">Contas</button>
+</div>
+</header>
+<section class="controls">
+<input id="search" type="text" placeholder="Buscar por nome, código, CPF/CNPJ, email"/>
+<button id="btnBuscar">Buscar</button>
+<button id="btnTodos">Todos (Ativos)</button>
+<button id="btnNovo" class="primary">Novo</button>
+</section>
+<section class="table-wrap">
+<table class="data-table">
+<thead id="thead"></thead>
+<tbody id="tbody"></tbody>
+</table>
+<div id="pagination" class="pagination"></div>
+</section>
+<div id="modal" class="modal hidden">
+<div class="modal-content">
+<h2 id="modalTitle"></h2>
+<form id="form">
+<div id="formFields"></div>
+<div class="actions">
+<button type="button" id="btnCancelar">Cancelar</button>
+<button type="submit" id="btnSalvar" class="primary">Salvar</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+<script>window.GBD={csrfToken:'{{ csrf_token }}'}</script>
+<script src="{% static 'js/gerenciamento_bd.js' %}"></script>
+</body>
+</html>

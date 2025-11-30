@@ -270,6 +270,203 @@ def db_health(request):
 
     return JsonResponse(result)
 
+def gerenciamento_bd(request):
+    return render(request, 'core/gerenciamento_bd.html')
+
+from django.views.decorators.http import require_http_methods
+
+@csrf_exempt
+@require_http_methods(["GET","POST"])
+def gbd_pessoas_list_create(request):
+    if request.method == 'GET':
+        search = request.GET.get('search','').strip()
+        status = request.GET.get('status','ATIVO').upper()
+        tipo = request.GET.get('tipo','').upper()
+        qs = Pessoas.objects.all()
+        if status:
+            qs = qs.filter(ativo=(status == 'ATIVO'))
+        if tipo in ('FORNECEDOR','CLIENTE','FATURADO'):
+            qs = qs.filter(tipo=tipo)
+        if search:
+            qs = qs.filter(razao_social__icontains=search)
+        data = []
+        for p in qs.order_by('id')[:200]:
+            data.append({
+                'id': p.id,
+                'tipo': p.tipo,
+                'nome': p.razao_social,
+                'cnpj_cpf': p.cnpj_cpf or '',
+                'email': p.email or '',
+                'telefone': p.telefone or '',
+                'status': 'ATIVO' if p.ativo else 'INATIVO'
+            })
+        return JsonResponse({'data':data})
+    try:
+        payload = json.loads(request.body)
+        pessoa = Pessoas.objects.create(
+            tipo=payload.get('tipo','FORNECEDOR').upper(),
+            razao_social=payload.get('nome','').strip(),
+            nome_fantasia=payload.get('nome_fantasia') or payload.get('nome','').strip(),
+            cnpj_cpf=(payload.get('cnpj_cpf') or '').strip(),
+            email=payload.get('email'),
+            telefone=payload.get('telefone'),
+            ativo=True
+        )
+        return JsonResponse({'sucesso':True,'id':pessoa.id})
+    except Exception as e:
+        return JsonResponse({'sucesso':False,'erro':str(e)},status=400)
+
+@csrf_exempt
+@require_http_methods(["PUT","PATCH","DELETE"])
+def gbd_pessoas_update_delete(request, pid:int):
+    try:
+        pessoa = Pessoas.objects.get(id=pid)
+    except Pessoas.DoesNotExist:
+        return JsonResponse({'erro':'Pessoa não encontrada'},status=404)
+    if request.method in ('PUT','PATCH'):
+        payload = json.loads(request.body)
+        pessoa.razao_social = payload.get('nome', pessoa.razao_social)
+        pessoa.cnpj_cpf = payload.get('cnpj_cpf', pessoa.cnpj_cpf)
+        pessoa.email = payload.get('email', pessoa.email)
+        pessoa.telefone = payload.get('telefone', pessoa.telefone)
+        tipo = (payload.get('tipo') or pessoa.tipo).upper()
+        if tipo in ('FORNECEDOR','CLIENTE','FATURADO'):
+            pessoa.tipo = tipo
+        pessoa.save()
+        return JsonResponse({'sucesso':True})
+    pessoa.ativo = False
+    pessoa.save()
+    return JsonResponse({'sucesso':True})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def gbd_pessoas_reativar(request, pid:int):
+    try:
+        pessoa = Pessoas.objects.get(id=pid)
+        pessoa.ativo = True
+        pessoa.save()
+        return JsonResponse({'sucesso':True})
+    except Pessoas.DoesNotExist:
+        return JsonResponse({'erro':'Pessoa não encontrada'},status=404)
+
+@csrf_exempt
+@require_http_methods(["GET","POST"])
+def gbd_class_list_create(request):
+    if request.method == 'GET':
+        search = request.GET.get('search','').strip()
+        status = request.GET.get('status','ATIVO').upper()
+        tipo = request.GET.get('tipo','').upper()
+        qs = Classificacao.objects.all()
+        if status:
+            qs = qs.filter(ativo=(status=='ATIVO'))
+        if tipo in ('RECEITA','DESPESA'):
+            qs = qs.filter(tipo=tipo)
+        if search:
+            qs = qs.filter(descricao__icontains=search)
+        data = []
+        for c in qs.order_by('id')[:200]:
+            data.append({'id':c.id,'descricao':c.descricao,'tipo':c.tipo,'status':'ATIVO' if c.ativo else 'INATIVO'})
+        return JsonResponse({'data':data})
+    try:
+        payload = json.loads(request.body)
+        c = Classificacao.objects.create(
+            tipo=(payload.get('tipo','DESPESA').upper()),
+            descricao=payload.get('descricao','').strip(),
+            ativo=True
+        )
+        return JsonResponse({'sucesso':True,'id':c.id})
+    except Exception as e:
+        return JsonResponse({'sucesso':False,'erro':str(e)},status=400)
+
+@csrf_exempt
+@require_http_methods(["PUT","PATCH","DELETE"])
+def gbd_class_update_delete(request, cid:int):
+    try:
+        c = Classificacao.objects.get(id=cid)
+    except Classificacao.DoesNotExist:
+        return JsonResponse({'erro':'Classificação não encontrada'},status=404)
+    if request.method in ('PUT','PATCH'):
+        payload = json.loads(request.body)
+        c.descricao = payload.get('descricao', c.descricao)
+        tipo = (payload.get('tipo') or c.tipo).upper()
+        if tipo in ('RECEITA','DESPESA'):
+            c.tipo = tipo
+        c.save()
+        return JsonResponse({'sucesso':True})
+    c.ativo = False
+    c.save()
+    return JsonResponse({'sucesso':True})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def gbd_class_reativar(request, cid:int):
+    try:
+        c = Classificacao.objects.get(id=cid)
+        c.ativo = True
+        c.save()
+        return JsonResponse({'sucesso':True})
+    except Classificacao.DoesNotExist:
+        return JsonResponse({'erro':'Classificação não encontrada'},status=404)
+
+@csrf_exempt
+@require_http_methods(["GET","POST"])
+def gbd_contas_list_create(request):
+    if request.method == 'GET':
+        search = request.GET.get('search','').strip()
+        status = request.GET.get('status','ATIVO').upper()
+        qs = MovimentoContas.objects.all()
+        if status:
+            qs = qs.filter(ativo=(status=='ATIVO'))
+        if search:
+            qs = qs.filter(descricao__icontains=search)
+        data = []
+        for m in qs.order_by('-id')[:200]:
+            data.append({'id':m.id,'tipo':m.tipo,'descricao':m.descricao,'valor_total':str(m.valor_total),'status':'ATIVO' if m.ativo else 'INATIVO'})
+        return JsonResponse({'data':data})
+    try:
+        payload = json.loads(request.body)
+        fornecedor = Pessoas.objects.filter(id=payload.get('pessoa_id')).first()
+        m = MovimentoContas.objects.create(
+            tipo=(payload.get('tipo') or 'PAGAR'),
+            pessoa=fornecedor,
+            descricao=payload.get('descricao','').strip(),
+            valor_total=payload.get('valor_total',0),
+            quantidade_parcelas=int(payload.get('quantidade_parcelas',1)),
+            data_emissao=datetime.strptime(payload.get('data_emissao'),'%Y-%m-%d').date() if payload.get('data_emissao') else datetime.today().date(),
+            ativo=True
+        )
+        return JsonResponse({'sucesso':True,'id':m.id})
+    except Exception as e:
+        return JsonResponse({'sucesso':False,'erro':str(e)},status=400)
+
+@csrf_exempt
+@require_http_methods(["PUT","PATCH","DELETE"])
+def gbd_contas_update_delete(request, mid:int):
+    try:
+        m = MovimentoContas.objects.get(id=mid)
+    except MovimentoContas.DoesNotExist:
+        return JsonResponse({'erro':'Registro não encontrado'},status=404)
+    if request.method in ('PUT','PATCH'):
+        payload = json.loads(request.body)
+        m.descricao = payload.get('descricao', m.descricao)
+        m.valor_total = payload.get('valor_total', m.valor_total)
+        m.save()
+        return JsonResponse({'sucesso':True})
+    m.ativo = False
+    m.save()
+    return JsonResponse({'sucesso':True})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def gbd_contas_reativar(request, mid:int):
+    try:
+        m = MovimentoContas.objects.get(id=mid)
+        m.ativo = True
+        m.save()
+        return JsonResponse({'sucesso':True})
+    except MovimentoContas.DoesNotExist:
+        return JsonResponse({'erro':'Registro não encontrado'},status=404)
+
 def validar_fornecedor_api(request):
     """
     API para validar fornecedor via GET (para interface AJAX)

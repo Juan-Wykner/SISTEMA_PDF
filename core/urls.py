@@ -26,6 +26,18 @@ urlpatterns = [
     # Redirecionamento para validação
     path('redirecionar-validacao/', views.redirecionar_validacao, name='redirecionar_validacao'),
     path('rag/', views.rag, name='rag'),
+    # Gerenciamento BD
+    path('gerenciamento-bd/', views.gerenciamento_bd, name='gerenciamento_bd'),
+    # APIs Gerenciamento
+    path('api/gbd/pessoas/', views.gbd_pessoas_list_create, name='gbd_pessoas_list_create'),
+    path('api/gbd/pessoas/<int:pid>/', views.gbd_pessoas_update_delete, name='gbd_pessoas_update_delete'),
+    path('api/gbd/pessoas/<int:pid>/reativar/', views.gbd_pessoas_reativar, name='gbd_pessoas_reativar'),
+    path('api/gbd/classificacao/', views.gbd_class_list_create, name='gbd_class_list_create'),
+    path('api/gbd/classificacao/<int:cid>/', views.gbd_class_update_delete, name='gbd_class_update_delete'),
+    path('api/gbd/classificacao/<int:cid>/reativar/', views.gbd_class_reativar, name='gbd_class_reativar'),
+    path('api/gbd/contas/', views.gbd_contas_list_create, name='gbd_contas_list_create'),
+    path('api/gbd/contas/<int:mid>/', views.gbd_contas_update_delete, name='gbd_contas_update_delete'),
+    path('api/gbd/contas/<int:mid>/reativar/', views.gbd_contas_reativar, name='gbd_contas_reativar'),
     
     # URLs do Agente2 - Validações (mantidas para compatibilidade)
     path('agente2/validar_fornecedor/', agente2.validar_fornecedor, name='validar_fornecedor'),

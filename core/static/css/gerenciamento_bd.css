@@ -1,0 +1,23 @@
+.container{max-width:1200px;margin:0 auto;padding:24px;font-family:Inter,system-ui,Arial}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.tabs{display:flex;gap:8px}
+.tab{padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#fff;cursor:pointer}
+.tab.active{background:#2563eb;color:#fff;border-color:#2563eb}
+.controls{display:flex;gap:8px;margin-bottom:12px}
+.controls input{flex:1;padding:8px;border:1px solid #d1d5db;border-radius:8px}
+.primary{background:#2563eb;color:#fff;border:1px solid #2563eb}
+.table-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden}
+.data-table{width:100%;border-collapse:collapse}
+.data-table thead th{background:#f3f4f6;text-align:left;padding:10px;border-bottom:1px solid #e5e7eb}
+.data-table tbody td{padding:10px;border-bottom:1px solid #e5e7eb}
+.data-table tbody tr:hover{background:#f9fafb}
+.pagination{display:flex;gap:8px;justify-content:flex-end;padding:8px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center}
+.modal.hidden{display:none}
+.modal-content{background:#fff;padding:16px;border-radius:12px;width:480px;max-width:95%}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.badge{padding:4px 8px;border-radius:999px;font-size:12px}
+.badge.ativo{background:#10b98133;color:#065f46}
+.badge.inativo{background:#ef444433;color:#7f1d1d}
+.row-actions{display:flex;gap:8px}
+.row-actions button{padding:6px 8px;border:1px solid #d1d5db;border-radius:6px;background:#fff;cursor:pointer}
