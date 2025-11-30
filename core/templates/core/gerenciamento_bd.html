@@ -20,7 +20,12 @@
 <section class="controls">
 <input id="search" type="text" placeholder="Buscar por nome, código, CPF/CNPJ, email"/>
 <button id="btnBuscar">Buscar</button>
-<button id="btnTodos">Todos (Ativos)</button>
+<select id="statusFilter" class="status-select">
+  <option value="ATIVO" selected>Ativos</option>
+  <option value="INATIVO">Inativos</option>
+  <option value="">Todos</option>
+  </select>
+<button id="btnTodos">Aplicar</button>
 <button id="btnNovo" class="primary">Novo</button>
 </section>
 <section class="table-wrap">

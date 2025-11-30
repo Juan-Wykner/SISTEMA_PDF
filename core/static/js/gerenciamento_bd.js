@@ -20,7 +20,7 @@ function renderRows(){const tbody=qs('#tbody');const start=(state.page-1)*state.
   return `<tr>${cells}</tr>`
 }).join('')}
 function renderPagination(){const total=Math.ceil(state.data.length/state.limit)||1;const el=qs('#pagination');let html='';for(let i=1;i<=total;i++){html+=`<button data-page="${i}" ${i===state.page?'class="primary"':''}>${i}</button>`}el.innerHTML=html}
-async function fetchData(){const ep=endpoints[state.module].base;const url=`${ep}?status=${state.status}&search=${encodeURIComponent(state.search)}`;const r=await fetch(url);const j=await r.json();state.data=j.data||[];state.page=1;renderHead();renderRows();renderPagination()}
+async function fetchData(){const ep=endpoints[state.module].base;const url=`${ep}?status=${encodeURIComponent(state.status)}&search=${encodeURIComponent(state.search)}`;const r=await fetch(url);const j=await r.json();state.data=j.data||[];state.page=1;renderHead();renderRows();renderPagination()}
 function openModal(title,fields){qs('#modalTitle').textContent=title;const f=qs('#formFields');f.innerHTML=fields.map(field=>{
   return `<label>${field.label}<input name="${field.name}" type="${field.type||'text'}" value="${field.value||''}" ${field.hidden?'style="display:none"':''}></label>`
 }).join('');qs('#modal').classList.remove('hidden')}
@@ -38,7 +38,8 @@ async function deleteRecord(id){const ep=endpoints[state.module].base+id+'/';con
 async function reactivateRecord(id){const ep=endpoints[state.module].base+id+'/reativar/';const r=await fetch(ep,{method:'POST',headers:{'X-CSRFToken':GBD.csrfToken}});const j=await r.json();if(j.sucesso){fetchData()}}
 function setup(){document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',e=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));e.currentTarget.classList.add('active');state.module=e.currentTarget.dataset.module;fetchData()}));
 qs('#btnBuscar').addEventListener('click',()=>{state.search=qs('#search').value.trim();fetchData()});
-qs('#btnTodos').addEventListener('click',()=>{state.search='';qs('#search').value='';state.status='ATIVO';fetchData()});
+const statusSel=document.querySelector('#statusFilter'); if(statusSel){statusSel.addEventListener('change',()=>{state.status=statusSel.value;});}
+qs('#btnTodos').addEventListener('click',()=>{state.search=qs('#search').value.trim();state.status=(statusSel?statusSel.value:'ATIVO');fetchData()});
 qs('#btnNovo').addEventListener('click',()=>{
   if(state.module==='pessoas')openModal('Nova Pessoa',[{label:'Nome',name:'nome'},{label:'CPF/CNPJ',name:'cnpj_cpf'},{label:'Email',name:'email'},{label:'Telefone',name:'telefone'},{label:'Tipo',name:'tipo'}])
   if(state.module==='classificacao')openModal('Nova Classificação',[{label:'Descrição',name:'descricao'},{label:'Tipo',name:'tipo'}])

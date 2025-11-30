@@ -5,6 +5,7 @@
 .tab.active{background:#2563eb;color:#fff;border-color:#2563eb}
 .controls{display:flex;gap:8px;margin-bottom:12px}
 .controls input{flex:1;padding:8px;border:1px solid #d1d5db;border-radius:8px}
+.status-select{padding:8px;border:1px solid #d1d5db;border-radius:8px;background:#fff}
 .primary{background:#2563eb;color:#fff;border:1px solid #2563eb}
 .table-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden}
 .data-table{width:100%;border-collapse:collapse}
