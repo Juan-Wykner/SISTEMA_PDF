@@ -1,83 +1,57 @@
-# SISTEMA_PDF
+# React + TypeScript + Vite
 
-Aplicação Django para processamento e validação de PDFs com foco em clareza, simplicidade e consistência.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Visão Geral
-- Interface para upload de PDF e extração dos dados (`core.views`).
-- Validação interativa e criação de cadastros relacionados (`core.views_validacao`).
-- Extração de texto do PDF e análise via agente LLM (`core.services` e `core.agents`).
+Currently, two official plugins are available:
 
-## Arquitetura (Camadas)
-- Domínio/Negócio: `core.models` (Pessoas, Classificação, Movimento/Parcela, MovimentoClassificação).
-- Infraestrutura: `core/infrastructure/file_storage.py` (gravação/remoção de arquivos temporários).
-- Interface/UI: `core/views.py`, `core/views_validacao.py` e templates em `core/templates/core/`.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-Princípios adotados:
-- Clareza acima de tudo: nomes significativos e responsabilidades explícitas.
-- Simplicidade antes de complexidade: evitar abstrações desnecessárias.
-- Consistência: mesmo estilo e convenções em todo o projeto.
-- SRP: funções/módulos com uma responsabilidade clara.
-- DRY: lógica comum centralizada.
+## Expanding the ESLint configuration
 
-## Qualidade de Código
-- Formatador: Black (`pyproject.toml`).
-- Ordenação de imports: isort (perfil Black).
-- Linter: Pylint (configuração em `.pylintrc`).
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-Comandos úteis (ambiente local):
-```bash
-# Formatador e imports
-black .
-isort .
-
-# Linter
-pylint core sistema_pdf
-
-# Testes
-python manage.py test
+```js
+export default tseslint.config({
+  extends: [
+    // Remove ...tseslint.configs.recommended and replace with this
+    ...tseslint.configs.recommendedTypeChecked,
+    // Alternatively, use this for stricter rules
+    ...tseslint.configs.strictTypeChecked,
+    // Optionally, add this for stylistic rules
+    ...tseslint.configs.stylisticTypeChecked,
+  ],
+  languageOptions: {
+    // other options...
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+})
 ```
 
-## Fluxo de Uso
-1. Acesse a página inicial e envie um PDF.
-2. O sistema extrai o texto do PDF e envia ao agente para análise.
-3. Você pode validar/ajustar cadastros pela interface interativa em `/validacao/`.
-4. Após validar, é possível criar o lançamento financeiro correlato.
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-## Execução com Docker
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-1. Build da imagem:
-```bash
-docker compose build
+export default tseslint.config({
+  extends: [
+    // other configs...
+    // Enable lint rules for React
+    reactX.configs['recommended-typescript'],
+    // Enable lint rules for React DOM
+    reactDom.configs.recommended,
+  ],
+  languageOptions: {
+    // other options...
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+})
 ```
-
-2. Migrações e subir app:
-```bash
-docker compose run --rm web python manage.py migrate
-docker compose up -d
-```
-
-3. Coletar estáticos (se necessário):
-```bash
-docker compose run --rm web python manage.py collectstatic --noinput
-```
-
-4. Acessar:
-- `http://localhost:8000`
-
-## Variáveis de Ambiente
-- `DEBUG`
-- `ALLOWED_HOSTS`
-- `GEMINI_API_KEY`
-
-## Desenvolvimento Local (sem Docker)
-1. Crie um virtualenv.
-2. Instale dependências: `pip install -r requirements.txt`.
-3. Rode: `python manage.py runserver`.
-
-## Convenções de Commits e Branches
-- Commits: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`.
-- Branches: `feat/<resumo>`, `fix/<resumo>`, `refactor/<resumo>`.
-
-## Dependências
-- Evite adicionar libs desnecessárias; prefira composição a herança.
-- Documente decisões e mantenha o projeto simples e transparente.
