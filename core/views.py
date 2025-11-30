@@ -489,9 +489,10 @@ def validar_fornecedor_api(request):
             if fornecedor:
                 return JsonResponse({
                     'existe': True,
+                    'ativo': bool(fornecedor.ativo),
                     'id': fornecedor.id,
                     'nome': fornecedor.razao_social,
-                    'mensagem': f'Fornecedor encontrado: {fornecedor.razao_social}'
+                    'mensagem': 'Fornecedor inativo' if not fornecedor.ativo else f'Fornecedor encontrado: {fornecedor.razao_social}'
                 })
             else:
                 return JsonResponse({
@@ -526,9 +527,10 @@ def validar_faturado_api(request):
             if faturado:
                 return JsonResponse({
                     'existe': True,
+                    'ativo': bool(faturado.ativo),
                     'id': faturado.id,
                     'nome': faturado.razao_social,
-                    'mensagem': f'Faturado encontrado: {faturado.razao_social}'
+                    'mensagem': 'Faturado inativo' if not faturado.ativo else f'Faturado encontrado: {faturado.razao_social}'
                 })
             else:
                 return JsonResponse({
@@ -560,9 +562,10 @@ def validar_classificacao_api(request):
             if classificacao:
                 return JsonResponse({
                     'existe': True,
+                    'ativo': bool(classificacao.ativo),
                     'id': classificacao.id,
                     'descricao': classificacao.descricao,
-                    'mensagem': f'Classificação encontrada: {classificacao.descricao}'
+                    'mensagem': 'Classificação inativa' if not classificacao.ativo else f'Classificação encontrada: {classificacao.descricao}'
                 })
             else:
                 return JsonResponse({
@@ -892,3 +895,48 @@ def criar_lancamento(request):
         'sucesso': False,
         'erro': 'Método não permitido'
     })
+@csrf_exempt
+@require_http_methods(["POST"])
+def reativar_fornecedor_api(request):
+    try:
+        payload = json.loads(request.body)
+        cnpj = (payload.get('cnpj') or '').replace('.', '').replace('/', '').replace('-', '')
+        pessoa = Pessoas.objects.filter(cnpj_cpf=cnpj, tipo='FORNECEDOR').first()
+        if not pessoa:
+            return JsonResponse({'sucesso':False,'erro':'Fornecedor não encontrado'},status=404)
+        pessoa.ativo = True
+        pessoa.save()
+        return JsonResponse({'sucesso':True,'id':pessoa.id})
+    except Exception as e:
+        return JsonResponse({'sucesso':False,'erro':str(e)},status=400)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def reativar_faturado_api(request):
+    try:
+        payload = json.loads(request.body)
+        cpf = (payload.get('cpf') or '').replace('.', '').replace('-', '')
+        pessoa = Pessoas.objects.filter(cnpj_cpf=cpf, tipo='FATURADO').first()
+        if not pessoa:
+            return JsonResponse({'sucesso':False,'erro':'Faturado não encontrado'},status=404)
+        pessoa.ativo = True
+        pessoa.save()
+        return JsonResponse({'sucesso':True,'id':pessoa.id})
+    except Exception as e:
+        return JsonResponse({'sucesso':False,'erro':str(e)},status=400)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def reativar_classificacao_api(request):
+    try:
+        payload = json.loads(request.body)
+        descricao = (payload.get('descricao') or '').strip()
+        tipo = (payload.get('tipo') or 'DESPESA').upper()
+        c = Classificacao.objects.filter(descricao__iexact=descricao, tipo=tipo).first()
+        if not c:
+            return JsonResponse({'sucesso':False,'erro':'Classificação não encontrada'},status=404)
+        c.ativo = True
+        c.save()
+        return JsonResponse({'sucesso':True,'id':c.id})
+    except Exception as e:
+        return JsonResponse({'sucesso':False,'erro':str(e)},status=400)

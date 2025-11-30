@@ -162,10 +162,25 @@ function concluirValidacao() {
 function atualizarStatusFornecedor(resultado) {
     const statusElement = document.getElementById('fornecedor-status');
     
-    if (resultado.existe) {
+    if (resultado.existe && resultado.ativo !== false) {
         statusElement.className = 'status success';
         statusElement.innerHTML = '<span class="status-icon">✓</span><span class="status-text">Cadastro existente</span>';
         adicionarLog(`Fornecedor encontrado: ${resultado.mensagem}`, 'success');
+    } else if (resultado.existe && resultado.ativo === false) {
+        statusElement.className = 'status warning';
+        statusElement.innerHTML = '<span class="status-icon">!</span><span class="status-text">Cadastro inativo</span> <button id="btn-reativar-fornecedor" class="btn-create-item">Reativar</button>';
+        document.getElementById('btn-reativar-fornecedor').onclick = async () => {
+            adicionarLog('Reativando fornecedor...', 'info');
+            const resp = await fetch('/api/reativar-fornecedor/', {method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken': getCookie('csrftoken')},body: JSON.stringify({cnpj: dadosValidacao.fornecedor.cnpj})});
+            const rj = await resp.json();
+            if (rj.sucesso){
+                statusElement.className = 'status success';
+                statusElement.innerHTML = '<span class="status-icon">✓</span><span class="status-text">Reativado</span>';
+                adicionarLog('Fornecedor reativado com sucesso', 'success');
+            } else {
+                adicionarLog(`Falha ao reativar fornecedor: ${rj.erro}`, 'error');
+            }
+        };
     } else {
         statusElement.className = 'status error';
         statusElement.innerHTML = '<span class="status-icon">✗</span><span class="status-text">Cadastro não existe</span>';
@@ -182,10 +197,25 @@ function atualizarStatusFornecedor(resultado) {
 function atualizarStatusFaturado(resultado) {
     const statusElement = document.getElementById('faturado-status');
     
-    if (resultado.existe) {
+    if (resultado.existe && resultado.ativo !== false) {
         statusElement.className = 'status success';
         statusElement.innerHTML = '<span class="status-icon">✓</span><span class="status-text">Cadastro existente</span>';
         adicionarLog(`Faturado encontrado: ${resultado.mensagem}`, 'success');
+    } else if (resultado.existe && resultado.ativo === false) {
+        statusElement.className = 'status warning';
+        statusElement.innerHTML = '<span class="status-icon">!</span><span class="status-text">Cadastro inativo</span> <button id="btn-reativar-faturado" class="btn-create-item">Reativar</button>';
+        document.getElementById('btn-reativar-faturado').onclick = async () => {
+            adicionarLog('Reativando faturado...', 'info');
+            const resp = await fetch('/api/reativar-faturado/', {method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken': getCookie('csrftoken')},body: JSON.stringify({cpf: dadosValidacao.faturado.cpf})});
+            const rj = await resp.json();
+            if (rj.sucesso){
+                statusElement.className = 'status success';
+                statusElement.innerHTML = '<span class="status-icon">✓</span><span class="status-text">Reativado</span>';
+                adicionarLog('Faturado reativado com sucesso', 'success');
+            } else {
+                adicionarLog(`Falha ao reativar faturado: ${rj.erro}`, 'error');
+            }
+        };
     } else {
         statusElement.className = 'status error';
         statusElement.innerHTML = '<span class="status-icon">✗</span><span class="status-text">Cadastro não existe</span>';
@@ -202,10 +232,26 @@ function atualizarStatusClassificacao(index, descricao, resultado) {
     const classificacoes = document.querySelectorAll('.classificacao-item');
     const statusElement = classificacoes[index].querySelector('.status');
     
-    if (resultado.existe) {
+    if (resultado.existe && resultado.ativo !== false) {
         statusElement.className = 'status success';
         statusElement.innerHTML = '<span class="status-icon">✓</span><span class="status-text">Existe</span>';
         adicionarLog(`Classificação encontrada: ${resultado.mensagem}`, 'success');
+    } else if (resultado.existe && resultado.ativo === false) {
+        statusElement.className = 'status warning';
+        statusElement.innerHTML = '<span class="status-icon">!</span><span class="status-text">Inativa</span> <button class="btn-create-item" id="btn-reativar-class-${index}">Reativar</button>';
+        const btn = document.getElementById(`btn-reativar-class-${index}`);
+        btn.onclick = async () => {
+            adicionarLog(`Reativando classificação ${descricao}...`, 'info');
+            const resp = await fetch('/api/reativar-classificacao/', {method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken': getCookie('csrftoken')},body: JSON.stringify({descricao, tipo:'DESPESA'})});
+            const rj = await resp.json();
+            if (rj.sucesso){
+                statusElement.className = 'status success';
+                statusElement.innerHTML = '<span class="status-icon">✓</span><span class="status-text">Reativada</span>';
+                adicionarLog('Classificação reativada com sucesso', 'success');
+            } else {
+                adicionarLog(`Falha ao reativar classificação: ${rj.erro}`, 'error');
+            }
+        };
     } else {
         statusElement.className = 'status error';
         statusElement.innerHTML = '<span class="status-icon">✗</span><span class="status-text">Não existe</span>';

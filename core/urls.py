@@ -38,6 +38,10 @@ urlpatterns = [
     path('api/gbd/contas/', views.gbd_contas_list_create, name='gbd_contas_list_create'),
     path('api/gbd/contas/<int:mid>/', views.gbd_contas_update_delete, name='gbd_contas_update_delete'),
     path('api/gbd/contas/<int:mid>/reativar/', views.gbd_contas_reativar, name='gbd_contas_reativar'),
+    # Reativação para validação
+    path('api/reativar-fornecedor/', views.reativar_fornecedor_api, name='reativar_fornecedor_api'),
+    path('api/reativar-faturado/', views.reativar_faturado_api, name='reativar_faturado_api'),
+    path('api/reativar-classificacao/', views.reativar_classificacao_api, name='reativar_classificacao_api'),
     
     # URLs do Agente2 - Validações (mantidas para compatibilidade)
     path('agente2/validar_fornecedor/', agente2.validar_fornecedor, name='validar_fornecedor'),
